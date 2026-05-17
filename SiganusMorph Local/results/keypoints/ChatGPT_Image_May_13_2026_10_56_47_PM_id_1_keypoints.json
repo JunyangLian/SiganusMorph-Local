@@ -1,0 +1,61 @@
+{
+  "image_name": "ChatGPT Image May 13, 2026, 10_56_47 PM.png",
+  "created_at": "2026-05-14T09:58:12",
+  "metadata": {
+    "specimen_id": "1",
+    "scale_method": "aruco_auto",
+    "mm_per_pixel": 0.1,
+    "notes": ""
+  },
+  "keypoints": {
+    "snout_tip": {
+      "x": 601.125,
+      "y": 1606.5
+    },
+    "eye_front": {
+      "x": 771.75,
+      "y": 1593.3750000000002
+    },
+    "operculum_posterior": {
+      "x": 1076.2499999999998,
+      "y": 1596.0
+    },
+    "caudal_base": {
+      "x": 3218.25,
+      "y": 1561.875
+    },
+    "caudal_fin_tip": {
+      "x": 3517.5,
+      "y": 1582.875
+    },
+    "anal_fin_base_posterior": {
+      "x": 2898.0,
+      "y": 1564.5
+    },
+    "body_depth_dorsal": {
+      "x": 1769.25,
+      "y": 1170.75
+    },
+    "body_depth_ventral": {
+      "x": 1769.25,
+      "y": 2044.875
+    },
+    "peduncle_depth_dorsal": {
+      "x": 2971.5,
+      "y": 1470.0
+    },
+    "peduncle_depth_ventral": {
+      "x": 2984.625,
+      "y": 1622.25
+    }
+  },
+  "measurements": {
+    "TL_straight_mm": 291.6470689249251,
+    "SL_straight_mm": 261.7505426212141,
+    "body_depth_mm": 87.41250000000001,
+    "head_length_mm": 47.52410079370254,
+    "snout_length_mm": 17.11290631365695,
+    "caudal_peduncle_length_mm": 32.026075801602666,
+    "caudal_peduncle_depth_mm": 15.281468556719279
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "image_name": "微信图片_20260514122059_244_6.jpg",
+  "created_at": "2026-05-14T14:03:28",
+  "metadata": {
+    "specimen_id": "1",
+    "scale_method": "aruco_board_coordinate_auto",
+    "mm_per_pixel": 0.1,
+    "scale_info": {
+      "success": true,
+      "board_coordinate_scale": true,
+      "ruler_qc": {
+        "success": true,
+        "message": "Detected 0-35 cm ruler ticks.",
+        "mm_per_pixel": 0.0917908593021464,
+        "real_length_mm": 350.0,
+        "pixel_span": 3813.015834702135,
+        "tick_count": 36,
+        "candidate_count": 72,
+        "mean_spacing_px": 108.94330956291815,
+        "spacing_cv": 5.476880929278428,
+        "endpoints": [
+          {
+            "x": 259.48853211009174,
+            "y": 671.5
+          },
+          {
+            "x": 4072.504366812227,
+            "y": 671.5
+          }
+        ],
+        "search_region": [
+          126,
+          556,
+          4074,
+          787
+        ]
+      },
+      "board_name": "a3_v2_charuco_plumb",
+      "output_width_px": 4200,
+      "output_height_px": 2970,
+      "mm_per_pixel": 0.1,
+      "anchor_note": "multi-marker layout",
+      "detected_layout_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "reprojection_error_px_mean": 1.9558223485946655,
+      "reprojection_error_px_max": 3.8689074516296387,
+      "inlier_count": 23,
+      "point_count": 32
+    },
+    "notes": ""
+  },
+  "keypoints": {
+    "snout_tip": {
+      "x": 538.3636363636364,
+      "y": 1573.0909090909092
+    },
+    "eye_front": {
+      "x": 721.6363636363636,
+      "y": 1573.0909090909092
+    },
+    "operculum_posterior": {
+      "x": 3608.1818181818185,
+      "y": 1580.727272727273
+    },
+    "caudal_base": {
+      "x": 3405.818181818182,
+      "y": 1580.727272727273
+    },
+    "caudal_fin_tip": {
+      "x": 3150.0,
+      "y": 1580.727272727273
+    },
+    "anal_fin_base_posterior": {
+      "x": 3024.0,
+      "y": 1573.0909090909092
+    },
+    "body_depth_dorsal": {
+      "x": 1458.5454545454545,
+      "y": 1168.3636363636365
+    },
+    "body_depth_ventral": {
+      "x": 1439.4545454545455,
+      "y": 1951.0909090909092
+    },
+    "peduncle_depth_dorsal": {
+      "x": 3176.727272727273,
+      "y": 1386.0
+    },
+    "peduncle_depth_ventral": {
+      "x": 3199.636363636364,
+      "y": 1706.7272727272725
+    }
+  },
+  "measurements": {
+    "TL_straight_mm": 261.16475278868234,
+    "SL_straight_mm": 286.7464713697018,
+    "body_depth_mm": 78.2960054077468,
+    "head_length_mm": 306.9827679768211,
+    "snout_length_mm": 18.327272727272724,
+    "caudal_peduncle_length_mm": 38.18945378197089,
+    "caudal_peduncle_depth_mm": 32.15444135999804
+  }
+}

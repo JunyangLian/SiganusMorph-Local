@@ -1,0 +1,176 @@
+{
+  "image_name": "微信图片_20260514161930_250_6.jpg",
+  "specimen_id": "1",
+  "source_type": "real",
+  "created_at": "2026-05-14T19:59:23",
+  "metadata": {
+    "specimen_id": "1",
+    "source_type": "real",
+    "scale_method": "aruco_board_coordinate_auto",
+    "mm_per_pixel": 0.1,
+    "scale_info": {
+      "success": true,
+      "board_coordinate_scale": true,
+      "ruler_qc": {
+        "success": false,
+        "message": "No dark ruler columns found.",
+        "tick_count": 0,
+        "search_region": [
+          126,
+          431,
+          4074,
+          787
+        ]
+      },
+      "board_name": "a3_v2_charuco_plumb",
+      "output_width_px": 4200,
+      "output_height_px": 2970,
+      "mm_per_pixel": 0.1,
+      "anchor_note": "multi-marker layout",
+      "detected_layout_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "reprojection_error_px_mean": 1.821833848953247,
+      "reprojection_error_px_max": 3.770378828048706,
+      "inlier_count": 21,
+      "point_count": 32
+    },
+    "axis_mode_selected": "spline",
+    "axis_mode_request": "spline",
+    "needs_review": false,
+    "notes": ""
+  },
+  "keypoints": {
+    "P1_snout_tip": [
+      927.8247714827521,
+      1592.2137954833022
+    ],
+    "P2_eye_front": [
+      1099.6441736091876,
+      1515.8486254361414
+    ],
+    "P3_operculum_posterior": [
+      1340.1913365861974,
+      1596.03205398566
+    ],
+    "P4_peduncle_start_midpoint": [
+      2649.837001683251,
+      1592.2137954833022
+    ],
+    "P5_caudal_base_midpoint": [
+      2924.748045085548,
+      1649.487673018673
+    ],
+    "P6_caudal_fork_midpoint": [
+      3165.2952080625573,
+      1722.0345845634754
+    ],
+    "P7U_caudal_fin_upper_tip": [
+      3325.6599833805635,
+      1626.5781220045244
+    ],
+    "P7L_caudal_fin_lower_tip": [
+      3244.5316848797356,
+      1884.7890581286913
+    ],
+    "P8_body_depth_dorsal": [
+      1774.5173292707937,
+      1212.775132110662
+    ],
+    "P9_body_depth_ventral": [
+      1771.8923036357778,
+      1916.2897109107864
+    ],
+    "P10_peduncle_depth_dorsal": [
+      2711.651480971494,
+      1535.656823127137
+    ],
+    "P11_peduncle_depth_ventral": [
+      2701.15137843143,
+      1648.534162262978
+    ],
+    "C1_head_axis_point": [
+      1223.2619459174407,
+      1582.9078023002799
+    ],
+    "C2_trunk_axis_point": [
+      1803.3926112559693,
+      1561.9073671122162
+    ],
+    "C3_posterior_trunk_axis_point": [
+      2373.023174054434,
+      1577.6576935032638
+    ],
+    "C4_peduncle_axis_point": [
+      2772.027070576861,
+      1606.5332918868512
+    ]
+  },
+  "derived_points": {
+    "P7V_caudal_fin_posterior_endpoint": [
+      3285.9011650738394,
+      1758.408281874177
+    ]
+  },
+  "body_axis_points_order": [
+    "P1_snout_tip",
+    "C1_head_axis_point",
+    "C2_trunk_axis_point",
+    "C3_posterior_trunk_axis_point",
+    "P4_peduncle_start_midpoint",
+    "C4_peduncle_axis_point",
+    "P5_caudal_base_midpoint"
+  ],
+  "caudal_tip_candidates": [
+    "P7U_caudal_fin_upper_tip",
+    "P7L_caudal_fin_lower_tip"
+  ],
+  "caudal_tip_selected": "upper",
+  "axis_mode_selected": "spline",
+  "needs_review": false,
+  "notes": "",
+  "measurements": {
+    "SL_straight_mm": 199.77444425412483,
+    "body_depth_mm": 70.3519476165302,
+    "head_length_straight_mm": 41.2384242076737,
+    "snout_length_straight_mm": 18.802538696521154,
+    "caudal_peduncle_length_straight_mm": 28.08137796342555,
+    "caudal_peduncle_depth_mm": 11.336465870693363,
+    "axis_mode_selected": "spline",
+    "derived_points": {
+      "P7V_caudal_fin_posterior_endpoint": {
+        "x": 3285.9011650738394,
+        "y": 1758.408281874177
+      }
+    },
+    "caudal_tip_selected": "upper",
+    "caudal_tip_projection_upper_px": 377.2204595600974,
+    "caudal_tip_projection_lower_px": 374.1049187209498,
+    "tail_axis_source": "P5_to_P6",
+    "caudal_extension_axis_mm": 37.722045956009744,
+    "TL_straight_axis_mm": 236.39257359989708,
+    "SL_axis_polyline_mm": 200.48118517714718,
+    "SL_axis_spline_mm": 200.51099746275224,
+    "TL_axis_polyline_mm": 238.20323113315692,
+    "TL_axis_spline_mm": 238.23304341876198,
+    "caudal_peduncle_length_axis_mm": 28.167295947274262,
+    "body_depth_axis_corrected_mm": null,
+    "head_length_axis_mm": null,
+    "snout_length_axis_mm": null,
+    "caudal_peduncle_depth_axis_corrected_mm": null,
+    "curvature_index_polyline": 1.0035376943515524,
+    "curvature_index_spline": 1.0036869240776887,
+    "SL_final_mm": 200.51099746275224,
+    "TL_final_mm": 238.23304341876198,
+    "SL_curve_mm": 200.51099746275224,
+    "TL_curve_mm": 238.23304341876198,
+    "curvature_index": 1.0036869240776887
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "name": "a3_v2_charuco_plumb",
+  "units": "mm",
+  "paper": {
+    "size": "A3 landscape",
+    "width_mm": 420.0,
+    "height_mm": 297.0
+  },
+  "dpi": 300,
+  "location_marker_dictionary": "DICT_4X4_50",
+  "location_marker_squares_mm": {
+    "0": {
+      "x": 11.0,
+      "y": 11.0,
+      "size": 16.0
+    },
+    "1": {
+      "x": 393.0,
+      "y": 11.0,
+      "size": 16.0
+    },
+    "2": {
+      "x": 11.0,
+      "y": 270.0,
+      "size": 16.0
+    },
+    "3": {
+      "x": 393.0,
+      "y": 270.0,
+      "size": 16.0
+    },
+    "4": {
+      "x": 202.0,
+      "y": 11.0,
+      "size": 16.0
+    },
+    "5": {
+      "x": 393.0,
+      "y": 140.5,
+      "size": 16.0
+    },
+    "6": {
+      "x": 202.0,
+      "y": 270.0,
+      "size": 16.0
+    },
+    "7": {
+      "x": 11.0,
+      "y": 140.5,
+      "size": 16.0
+    }
+  },
+  "charuco": {
+    "dictionary_name": "DICT_6X6_250",
+    "squares_x": 18,
+    "squares_y": 4,
+    "square_length_mm": 7.0,
+    "marker_length_mm": 5.0,
+    "origin_x_mm": 60.0,
+    "origin_y_mm": 247.0
+  },
+  "ruler": {
+    "start_x_mm": 35.0,
+    "y_mm": 50.0,
+    "length_mm": 350.0,
+    "tick_count": 351
+  },
+  "plumb_lines": {
+    "outer_frame_mm": [
+      6.0,
+      6.0,
+      414.0,
+      291.0
+    ],
+    "fish_box_mm": [
+      45.0,
+      86.0,
+      375.0,
+      223.0
+    ],
+    "top_ruler_baseline_y_mm": 72.0,
+    "bottom_reference_y_mm": 236.0,
+    "left_reference_x_mm": 45.0,
+    "right_reference_x_mm": 375.0
+  },
+  "notes": [
+    "Location ArUco markers use IDs 0-7 in DICT_4X4_50.",
+    "The ChArUco panel uses DICT_6X6_250 and is intended for empty-board camera calibration/QC.",
+    "Fish placement area is kept blue and visually clean for segmentation."
+  ]
+}
