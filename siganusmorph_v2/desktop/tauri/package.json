@@ -1,0 +1,14 @@
+{
+  "name": "siganusmorph-v2-tauri-shell",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.5"
+  }
+}
+

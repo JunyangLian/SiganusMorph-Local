@@ -1,0 +1,69 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime / experimental outputs
+results/
+runs/
+
+# Datasets
+datasets/
+
+# Models / weights
+models/
+*.pt
+*.pth
+*.onnx
+
+# Historical / archive
+archive/
+_deployment_build/
+release_v1.0_software_copyright/
+release_v2.0_software_copyright/
+README_legacy_v0.1.md
+
+# Developer-only material
+developer_tools/
+
+# Secrets / local config
+.env
+*.env
+.streamlit/secrets.toml
+
+# Large/local data: ignore everything by default
+data/*
+
+# But keep calibration-board assets
+!data/calibration_board/
+!data/calibration_board/**
+
+# Node / frontend build
+node_modules/
+dist/
+.vite/
+
+# Rust / Tauri build
+target/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+
+# Build artifacts
+target/
+*.log
+*.tmp

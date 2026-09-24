@@ -1,0 +1,17 @@
+[package]
+name = "siganusmorph_v2"
+version = "2.0.0"
+description = "SiganusMorph Local V2.0 desktop shell"
+authors = ["SiganusMorph Local"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+

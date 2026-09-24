@@ -1,0 +1,19 @@
+[server]
+headless = true
+address = "127.0.0.1"
+port = 8501
+baseUrlPath = "SiganusMorph"
+maxUploadSize = 50
+enableCORS = true
+enableXsrfProtection = true
+fileWatcherType = "none"
+
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
+
+[logger]
+level = "warning"

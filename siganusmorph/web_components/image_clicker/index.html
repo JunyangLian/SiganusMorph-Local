@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      #wrap {
+        display: inline-block;
+        line-height: 0;
+        position: relative;
+      }
+
+      #target {
+        cursor: crosshair;
+        display: block;
+        height: auto;
+        max-width: 100%;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrap">
+      <canvas id="target"></canvas>
+    </div>
+
+    <script>
+      const COMPONENT_READY = "streamlit:componentReady";
+      const SET_COMPONENT_VALUE = "streamlit:setComponentValue";
+      const SET_FRAME_HEIGHT = "streamlit:setFrameHeight";
+      const RENDER = "streamlit:render";
+      const canvas = document.getElementById("target");
+      const ctx = canvas.getContext("2d");
+      const image = new Image();
+      let canvasWidth = 1;
+      let canvasHeight = 1;
+
+      function post(message) {
+        window.parent.postMessage({ isStreamlitMessage: true, ...message }, "*");
+      }
+
+      function setFrameHeight() {
+        const rect = canvas.getBoundingClientRect();
+        const height = Math.ceil(rect.height || canvas.height || 0);
+        post({ type: SET_FRAME_HEIGHT, height });
+      }
+
+      function drawImage() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+      }
+
+      function render(args) {
+        canvasWidth = Math.max(1, Math.round(Number(args.width || 1)));
+        canvasHeight = Math.max(1, Math.round(Number(args.height || 1)));
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = "auto";
+        image.onload = () => {
+          drawImage();
+          setFrameHeight();
+        };
+        image.src = args.image_data;
+        if (image.complete && image.naturalWidth > 0) {
+          drawImage();
+          setFrameHeight();
+        }
+      }
+
+      function displayCoordinates(event) {
+        const rect = canvas.getBoundingClientRect();
+        const renderedWidth = rect.width || canvasWidth;
+        const renderedHeight = rect.height || canvasHeight;
+        const rawX = event.clientX - rect.left;
+        const rawY = event.clientY - rect.top;
+        return {
+          x: rawX * (canvas.width / renderedWidth),
+          y: rawY * (canvas.height / renderedHeight),
+          raw_x: rawX,
+          raw_y: rawY,
+          width: canvas.width,
+          height: canvas.height,
+          canvas_width: canvas.width,
+          canvas_height: canvas.height,
+          rendered_width: renderedWidth,
+          rendered_height: renderedHeight,
+          rect_left: rect.left,
+          rect_top: rect.top,
+        };
+      }
+
+      function sendClick(event, button) {
+        const coords = displayCoordinates(event);
+        post({
+          type: SET_COMPONENT_VALUE,
+          value: {
+            ...coords,
+            button,
+            timestamp: Date.now(),
+          },
+        });
+      }
+
+      canvas.addEventListener("click", (event) => {
+        if (event.button !== 0) {
+          return;
+        }
+        sendClick(event, "left");
+      });
+
+      canvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        sendClick(event, "right");
+      });
+
+      window.addEventListener("resize", setFrameHeight);
+
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== RENDER) {
+          return;
+        }
+        render(event.data.args || {});
+      });
+
+      post({ type: COMPONENT_READY, apiVersion: 1 });
+      setFrameHeight();
+    </script>
+  </body>
+</html>

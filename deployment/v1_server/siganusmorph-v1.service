@@ -1,0 +1,24 @@
+[Unit]
+Description=SiganusMorph Local V1.0
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=siganusmorph
+Group=siganusmorph
+WorkingDirectory=/opt/siganusmorph-v1
+Environment="HOME=/opt/siganusmorph-v1"
+Environment="PATH=/opt/siganusmorph-v1/.venv/bin"
+Environment="OMP_NUM_THREADS=2"
+Environment="MKL_NUM_THREADS=2"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/opt/siganusmorph-v1/.venv/bin/streamlit run app.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

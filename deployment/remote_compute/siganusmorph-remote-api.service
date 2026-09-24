@@ -1,0 +1,18 @@
+[Unit]
+Description=SiganusMorph remote measurement worker API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin/yangzz/SiganusMorph
+EnvironmentFile=/home/admin/yangzz/SiganusMorph/deployment/remote_compute/remote_api.env
+ExecStart=/home/admin/yangzz/SiganusMorph/.venv/bin/python scripts/remote_measurement_job_api.py --host 127.0.0.1 --port 8766
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

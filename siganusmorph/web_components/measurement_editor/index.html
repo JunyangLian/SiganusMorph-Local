@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        overflow: hidden;
+        font-family: "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      #toolbar {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 0 0 8px 0;
+      }
+
+      #applyBtn {
+        background: #0f766e;
+        border: 0;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 7px 14px;
+      }
+
+      #applyBtn:disabled {
+        background: #9ca3af;
+        cursor: default;
+      }
+
+      #status {
+        color: #334155;
+        font-size: 13px;
+      }
+
+      #wrap {
+        display: inline-block;
+        line-height: 0;
+        position: relative;
+      }
+
+      #target {
+        cursor: default;
+        display: block;
+        height: auto;
+        max-width: 100%;
+        outline: none;
+        user-select: none;
+      }
+
+      #panel {
+        background: rgba(15, 23, 42, 0.78);
+        border-radius: 6px;
+        color: white;
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 8px 10px;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">
+      <button id="applyBtn" disabled>应用修改</button>
+      <span id="status">拖动点位或使用方向键微调；修改后点击“应用修改”。</span>
+    </div>
+    <div id="wrap">
+      <canvas id="target" tabindex="0"></canvas>
+      <div id="panel"></div>
+    </div>
+
+    <script>
+      const COMPONENT_READY = "streamlit:componentReady";
+      const SET_COMPONENT_VALUE = "streamlit:setComponentValue";
+      const SET_FRAME_HEIGHT = "streamlit:setFrameHeight";
+      const RENDER = "streamlit:render";
+
+      const canvas = document.getElementById("target");
+      const ctx = canvas.getContext("2d");
+      const image = new Image();
+      const panel = document.getElementById("panel");
+      const applyBtn = document.getElementById("applyBtn");
+      const statusEl = document.getElementById("status");
+
+      let canvasWidth = 1;
+      let canvasHeight = 1;
+      let points = [];
+      let lines = [];
+      let polylines = [];
+      let stars = [];
+      let mmPerPixel = 0.1;
+      let showLabels = false;
+      let enableMagnifier = true;
+      let imageCoordWidth = 1;
+      let imageCoordHeight = 1;
+      let displayToImageScale = 1;
+      let debugMode = false;
+      let selectedIndex = -1;
+      let hoverIndex = -1;
+      let draggingIndex = -1;
+      let dirty = false;
+      let mouse = { x: 0, y: 0, inside: false };
+      let currentMeasurements = {};
+
+      function post(message) {
+        window.parent.postMessage({ isStreamlitMessage: true, ...message }, "*");
+      }
+
+      function setFrameHeight() {
+        const rect = document.body.getBoundingClientRect();
+        post({ type: SET_FRAME_HEIGHT, height: Math.ceil(rect.height || 0) + 4 });
+      }
+
+      function cleanColor(hex, fallback) {
+        if (!hex || typeof hex !== "string") return fallback;
+        const clean = hex.replace("#", "");
+        return clean.length === 6 ? `#${clean}` : fallback;
+      }
+
+      function getPoint(name) {
+        return points.find((p) => p.name === name);
+      }
+
+      function distance(a, b) {
+        if (!a || !b) return null;
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function unit(a, b) {
+        const d = distance(a, b);
+        if (!d || d <= 1e-9) return null;
+        return { x: (b.x - a.x) / d, y: (b.y - a.y) / d };
+      }
+
+      function dot(a, b) {
+        return a.x * b.x + a.y * b.y;
+      }
+
+      function angleDeg(a, b) {
+        const la = Math.hypot(a.x, a.y);
+        const lb = Math.hypot(b.x, b.y);
+        if (la <= 1e-9 || lb <= 1e-9) return null;
+        const v = Math.max(-1, Math.min(1, dot(a, b) / (la * lb)));
+        return (Math.acos(v) * 180) / Math.PI;
+      }
+
+      function axisUnitNearP5() {
+        const p5 = getPoint("P5_caudal_base");
+        const axis = polylines.length ? polylines[0].points || [] : [];
+        if (axis.length >= 2) {
+          let idx = axis.length - 1;
+          if (p5) {
+            let best = Infinity;
+            axis.forEach((pt, i) => {
+              const d = Math.hypot(pt[0] - p5.x, pt[1] - p5.y);
+              if (d < best) {
+                best = d;
+                idx = i;
+              }
+            });
+          }
+          const prev = axis[Math.max(0, idx - 1)];
+          const curr = axis[idx];
+          const next = axis[Math.min(axis.length - 1, idx + 1)];
+          const a = idx > 0 ? { x: prev[0], y: prev[1] } : { x: curr[0], y: curr[1] };
+          const b = idx > 0 ? { x: curr[0], y: curr[1] } : { x: next[0], y: next[1] };
+          const u = unit(a, b);
+          if (u) return u;
+        }
+        const p4 = getPoint("P4_peduncle_anterior");
+        if (p4 && p5) return unit(p4, p5);
+        return null;
+      }
+
+      function fmt(value, digits = 2) {
+        if (value === null || value === undefined || Number.isNaN(value)) return "NA";
+        return Number(value).toFixed(digits);
+      }
+
+      function computeMeasurements() {
+        const p1 = getPoint("P1_snout_tip");
+        const p2 = getPoint("P2_eye_anterior");
+        const p3 = getPoint("P3_operculum_posterior");
+        const p4 = getPoint("P4_peduncle_anterior");
+        const p5 = getPoint("P5_caudal_base");
+        const p6 = getPoint("P6_caudal_fork");
+        const p7u = getPoint("P7U_upper_lobe_tip");
+        const p7l = getPoint("P7L_lower_lobe_tip");
+        const bdu = getPoint("body_depth_upper");
+        const bdl = getPoint("body_depth_lower");
+        const pdu = getPoint("peduncle_depth_upper");
+        const pdl = getPoint("peduncle_depth_lower");
+        const m = {};
+        if (p1 && p5) m.SL_mm = distance(p1, p5) * mmPerPixel;
+        if (p1 && p6) m.FL_mm = distance(p1, p6) * mmPerPixel;
+        if (bdu && bdl) m.body_depth_mm = distance(bdu, bdl) * mmPerPixel;
+        if (p1 && p3) m.head_length_mm = distance(p1, p3) * mmPerPixel;
+        if (p1 && p2) m.snout_length_mm = distance(p1, p2) * mmPerPixel;
+        if (p4 && p5) m.caudal_peduncle_length_mm = distance(p4, p5) * mmPerPixel;
+        if (pdu && pdl) m.caudal_peduncle_depth_mm = distance(pdu, pdl) * mmPerPixel;
+
+        const axis = axisUnitNearP5();
+        if (p5 && p7u && p7l && axis && m.SL_mm !== undefined) {
+          const upper = { x: p7u.x - p5.x, y: p7u.y - p5.y };
+          const lower = { x: p7l.x - p5.x, y: p7l.y - p5.y };
+          const projU = dot(upper, axis);
+          const projL = dot(lower, axis);
+          const openExt = Math.max(0, projU, projL);
+          const ru = Math.hypot(upper.x, upper.y);
+          const rl = Math.hypot(lower.x, lower.y);
+          const rmax = Math.max(ru, rl);
+          m.P7V_open_projection = { x: p5.x + openExt * axis.x, y: p5.y + openExt * axis.y };
+          m.P7V_compressed_virtual = { x: p5.x + rmax * axis.x, y: p5.y + rmax * axis.y };
+          m.TL_open_projection_mm = m.SL_mm + openExt * mmPerPixel;
+          m.TL_compressed_virtual_mm = m.SL_mm + rmax * mmPerPixel;
+          m.TL_difference_mm = m.TL_compressed_virtual_mm - m.TL_open_projection_mm;
+          m.RU_mm = ru * mmPerPixel;
+          m.RL_mm = rl * mmPerPixel;
+          m.upper_lobe_angle_to_axis_deg = angleDeg(upper, axis);
+          m.lower_lobe_angle_to_axis_deg = angleDeg(lower, axis);
+          m.inter_lobe_open_angle_deg = angleDeg(upper, lower);
+        }
+        currentMeasurements = m;
+        return m;
+      }
+
+      function updatePanel() {
+        const m = computeMeasurements();
+        const debugLine = debugMode
+          ? `<br />display ${canvasWidth}x${canvasHeight} | image ${imageCoordWidth}x${imageCoordHeight} | scale ${displayToImageScale.toFixed(4)}`
+          : "";
+        panel.innerHTML = [
+          `<b>当前测量结果</b>`,
+          `TL 压拢: ${fmt(m.TL_compressed_virtual_mm)} mm`,
+          `TL 投影: ${fmt(m.TL_open_projection_mm)} mm`,
+          `SL: ${fmt(m.SL_mm)} mm`,
+          `FL: ${fmt(m.FL_mm)} mm`,
+          `体高: ${fmt(m.body_depth_mm)} mm`,
+          `尾柄高: ${fmt(m.caudal_peduncle_depth_mm)} mm${debugLine}`,
+        ].join("<br />");
+      }
+
+      function setDirty(value) {
+        dirty = value;
+        applyBtn.disabled = !dirty;
+        statusEl.textContent = dirty
+          ? "有未应用修改。点击“应用修改”后更新右侧/下方表格。"
+          : "拖动点位或使用方向键微调；修改后点击“应用修改”。";
+      }
+
+      function label(text, x, y, color) {
+        if (!text) return;
+        ctx.font = "12px Microsoft YaHei, Arial";
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(0,0,0,0.85)";
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = color || "#ffffff";
+        ctx.fillText(text, x, y);
+      }
+
+      function drawStar(cx, cy, radius, fill, outline, text) {
+        const pts = [];
+        for (let i = 0; i < 10; i += 1) {
+          const r = i % 2 === 0 ? radius : radius * 0.45;
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+        }
+        ctx.beginPath();
+        pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+        ctx.closePath();
+        ctx.fillStyle = fill || "#9b5cff";
+        ctx.strokeStyle = outline || "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.fill();
+        ctx.stroke();
+        if (showLabels) label(text, cx + radius + 4, cy - radius - 4, fill || "#9b5cff");
+      }
+
+      function drawLine(line) {
+        const a = getPoint(line.a);
+        const b = getPoint(line.b);
+        if (!a || !b) return;
+        ctx.save();
+        ctx.strokeStyle = cleanColor(line.color, "#33ccff");
+        ctx.lineWidth = Number(line.width || 1.5);
+        if (line.dash) ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+        if (showLabels && line.label) label(line.label, (a.x + b.x) / 2 + 5, (a.y + b.y) / 2 + 5, line.color || "#33ccff");
+      }
+
+      function drawPolyline(polyline) {
+        if (!Array.isArray(polyline.points) || polyline.points.length < 2) return;
+        ctx.save();
+        ctx.strokeStyle = cleanColor(polyline.color, "#00a6ff");
+        ctx.lineWidth = Number(polyline.width || 2);
+        if (polyline.dash) ctx.setLineDash([7, 7]);
+        ctx.beginPath();
+        polyline.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPoint(point, index) {
+        const baseR = Number(point.radius || 4);
+        const hoverR = Number(point.hover_radius || 8);
+        const r = index === hoverIndex || index === selectedIndex ? hoverR : baseR;
+        const fill = cleanColor(point.color, "#ffffff");
+        const outline = selectedIndex === index ? "#ffcc00" : cleanColor(point.outline, "#111111");
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = outline;
+        ctx.lineWidth = selectedIndex === index ? 2.5 : 1.3;
+        ctx.fill();
+        ctx.stroke();
+        if (showLabels || index === hoverIndex || index === selectedIndex) {
+          label(point.label || point.name, point.x + r + 4, point.y - r - 4, fill);
+        }
+      }
+
+      function drawCrosshair(point) {
+        if (!point) return;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.72)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, point.y);
+        ctx.lineTo(canvasWidth, point.y);
+        ctx.moveTo(point.x, 0);
+        ctx.lineTo(point.x, canvasHeight);
+        ctx.stroke();
+        ctx.restore();
+        label(`${point.label || point.name} x=${point.x.toFixed(1)}, y=${point.y.toFixed(1)}`, point.x + 10, point.y + 18, "#ffffff");
+      }
+
+      function drawMagnifier() {
+        if (!enableMagnifier || !mouse.inside) return;
+        const size = 120;
+        const zoom = 3;
+        const sx = Math.max(0, Math.min(canvasWidth - size / zoom, mouse.x - size / (2 * zoom)));
+        const sy = Math.max(0, Math.min(canvasHeight - size / zoom, mouse.y - size / (2 * zoom)));
+        let dx = mouse.x + 20;
+        let dy = mouse.y + 20;
+        if (dx + size > canvasWidth) dx = mouse.x - size - 20;
+        if (dy + size > canvasHeight) dy = mouse.y - size - 20;
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.fillRect(dx - 3, dy - 3, size + 6, size + 6);
+        ctx.drawImage(image, sx, sy, size / zoom, size / zoom, dx, dy, size, size);
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dx, dy, size, size);
+        ctx.strokeStyle = "rgba(255,0,0,0.75)";
+        ctx.beginPath();
+        ctx.moveTo(dx + size / 2, dy);
+        ctx.lineTo(dx + size / 2, dy + size);
+        ctx.moveTo(dx, dy + size / 2);
+        ctx.lineTo(dx + size, dy + size / 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+        polylines.forEach(drawPolyline);
+        lines.forEach(drawLine);
+        const m = computeMeasurements();
+        if (m.P7V_compressed_virtual) {
+          drawStar(m.P7V_compressed_virtual.x, m.P7V_compressed_virtual.y, 6, "#9b5cff", "#ffffff", "P7V");
+        } else {
+          stars.forEach((s) => drawStar(s.x, s.y, Number(s.radius || 6), s.color, s.outline, s.label));
+        }
+        points.forEach(drawPoint);
+        if (draggingIndex >= 0) drawCrosshair(points[draggingIndex]);
+        else if (selectedIndex >= 0 && (hoverIndex === selectedIndex || mouse.inside)) drawCrosshair(points[selectedIndex]);
+        drawMagnifier();
+        updatePanel();
+      }
+
+      function displayCoordinates(event) {
+        const rect = canvas.getBoundingClientRect();
+        const rw = rect.width || canvasWidth;
+        const rh = rect.height || canvasHeight;
+        const rawX = event.clientX - rect.left;
+        const rawY = event.clientY - rect.top;
+        return {
+          x: Math.max(0, Math.min(canvas.width, rawX * (canvas.width / rw))),
+          y: Math.max(0, Math.min(canvas.height, rawY * (canvas.height / rh))),
+        };
+      }
+
+      function nearestPoint(x, y) {
+        let best = -1;
+        let bestDist = Infinity;
+        points.forEach((p, i) => {
+          if (p.draggable === false) return;
+          const d = Math.hypot(p.x - x, p.y - y);
+          const hit = Number(p.hit_radius || 16);
+          if (d <= hit && d < bestDist) {
+            best = i;
+            bestDist = d;
+          }
+        });
+        return best;
+      }
+
+      function moveSelected(dx, dy) {
+        if (selectedIndex < 0) return;
+        points[selectedIndex].x = Math.max(0, Math.min(canvasWidth, points[selectedIndex].x + dx));
+        points[selectedIndex].y = Math.max(0, Math.min(canvasHeight, points[selectedIndex].y + dy));
+        setDirty(true);
+        draw();
+      }
+
+      function applyChanges() {
+        computeMeasurements();
+        post({
+          type: SET_COMPONENT_VALUE,
+          value: {
+            event: "apply_changes",
+            points,
+            measurements: currentMeasurements,
+            timestamp: Date.now(),
+            canvas_width: canvas.width,
+            canvas_height: canvas.height,
+          },
+        });
+        setDirty(false);
+      }
+
+      function render(args) {
+        canvasWidth = Math.max(1, Math.round(Number(args.width || 1)));
+        canvasHeight = Math.max(1, Math.round(Number(args.height || 1)));
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = "auto";
+        points = Array.isArray(args.points) ? JSON.parse(JSON.stringify(args.points)) : [];
+        lines = Array.isArray(args.lines) ? args.lines : [];
+        polylines = Array.isArray(args.polylines) ? args.polylines : [];
+        stars = Array.isArray(args.stars) ? args.stars : [];
+        mmPerPixel = Number(args.mm_per_pixel || 0.1);
+        showLabels = Boolean(args.show_labels);
+        enableMagnifier = Boolean(args.enable_magnifier);
+        imageCoordWidth = Number(args.image_coord_width || canvasWidth);
+        imageCoordHeight = Number(args.image_coord_height || canvasHeight);
+        displayToImageScale = Number(args.display_to_image_scale || 1);
+        debugMode = Boolean(args.debug);
+        selectedIndex = -1;
+        hoverIndex = -1;
+        draggingIndex = -1;
+        mouse = { x: 0, y: 0, inside: false };
+        setDirty(false);
+        image.onload = () => {
+          draw();
+          setFrameHeight();
+        };
+        image.src = args.image_data;
+        if (image.complete && image.naturalWidth > 0) {
+          draw();
+          setFrameHeight();
+        }
+      }
+
+      canvas.addEventListener("mousedown", (event) => {
+        canvas.focus();
+        const p = displayCoordinates(event);
+        selectedIndex = nearestPoint(p.x, p.y);
+        draggingIndex = selectedIndex;
+        draw();
+      });
+
+      canvas.addEventListener("mousemove", (event) => {
+        const p = displayCoordinates(event);
+        mouse = { x: p.x, y: p.y, inside: true };
+        if (draggingIndex >= 0) {
+          points[draggingIndex].x = p.x;
+          points[draggingIndex].y = p.y;
+          setDirty(true);
+          draw();
+          return;
+        }
+        hoverIndex = nearestPoint(p.x, p.y);
+        canvas.style.cursor = hoverIndex >= 0 ? "grab" : "default";
+        draw();
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        mouse.inside = false;
+        hoverIndex = -1;
+        draw();
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (draggingIndex < 0) return;
+        draggingIndex = -1;
+        canvas.style.cursor = "default";
+        draw();
+      });
+
+      canvas.addEventListener("keydown", (event) => {
+        if (selectedIndex < 0) return;
+        const step = event.shiftKey ? 5 : 1;
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveSelected(-step, 0);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveSelected(step, 0);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          moveSelected(0, -step);
+        } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          moveSelected(0, step);
+        }
+      });
+
+      applyBtn.addEventListener("click", applyChanges);
+      window.addEventListener("resize", setFrameHeight);
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== RENDER) return;
+        render(event.data.args || {});
+      });
+
+      post({ type: COMPONENT_READY, apiVersion: 1 });
+      setFrameHeight();
+    </script>
+  </body>
+</html>
