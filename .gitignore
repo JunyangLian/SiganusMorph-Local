@@ -67,3 +67,5 @@ __pycache__/
 target/
 *.log
 *.tmp
+
+siganusmorph_v2/
